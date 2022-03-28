@@ -57,8 +57,8 @@ public class JDBCExample {
             System.out.println("-----------------------");
 
 
-            int suCodigoECI=20134423;
-            registrarNuevoProducto(con, suCodigoECI, "SU NOMBRE", 99999999);
+            int suCodigoECI=2165814;
+            registrarNuevoProducto(con, suCodigoECI, "arepa rik", 3500);
             con.commit();
 
 
@@ -80,11 +80,16 @@ public class JDBCExample {
      * @throws SQLException
      */
     public static void registrarNuevoProducto(Connection con, int codigo, String nombre,int precio) throws SQLException{
-        //Crear preparedStatement
-        //Asignar parámetros
-        //usar 'execute'
-
-
+        String consultString =
+                "INSERT INTO ORD_PRODUCTOS VALUES(?, ?, ?);";
+        try (PreparedStatement consultTable = con.prepareStatement(consultString)) {
+            consultTable.setInt(1, codigo);
+            consultTable.setString(2, nombre);
+            consultTable.setInt(3, precio);
+            consultTable.execute();
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
+        }
         con.commit();
 
     }
@@ -122,13 +127,22 @@ public class JDBCExample {
      * @return el costo total del pedido (suma de: cantidades*precios)
      */
     public static int valorTotalPedido(Connection con, int codigoPedido){
-
-        //Crear prepared statement
-        //asignar parámetros
-        //usar executeQuery
-        //Sacar resultado del ResultSet
-
-        return 0;
+        String consultString =
+                "SELECT SUM(precio*b.cantidad) AS PRECIO FROM  ORD_PRODUCTOS c " +
+                        "INNER JOIN ORD_DETALLE_PEDIDO b ON b.producto_fk = c.codigo " +
+                        "WHERE b.pedido_fk = ?;";
+        int precio = 0;
+        try (PreparedStatement consultTable = con.prepareStatement(consultString)){
+            consultTable.setInt(1, codigoPedido);
+            ResultSet res = consultTable.executeQuery();
+            while(res.next()) {
+                String name = res.getString("PRECIO");
+                precio = Integer.parseInt(name);
+            }
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return precio;
     }
 
     /**
